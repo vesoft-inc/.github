@@ -9,3 +9,57 @@
 
 ### Latest Releases
 
+{{- range rss "https://github.com/vesoft-inc/nebula/releases.atom" 1 }}
+- [NebulaGraph ![](https://shields.io/github/stars/vesoft-inc/nebula?style=social)](https://github.com/vesoft-inc/nebula) - [{{ .Title }}]({{ .URL }}) (Released {{ humanize .PublishedAt }})
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-operator/releases.atom" 1 }}
+- [NebulaGraph Operator ![](https://shields.io/github/stars/vesoft-inc/nebula-operator?style=social)](https://github.com/vesoft-inc/nebula-operator) -  [{{ .Title }}]({{ .URL }}) (Released {{ humanize .PublishedAt }})
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-console/releases.atom" 1 }}
+- [NebulaGraph Console  ![](https://shields.io/github/stars/vesoft-inc/nebula-console?style=social)](https://github.com/vesoft-inc/easeagent) -  [{{ .Title }}]({{ .URL }}) (Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-studio/releases.atom" 1 }}
+- [NebulaGraph Studio  ![](https://shields.io/github/stars/vesoft-inc/nebula-studio?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-dashboard/releases.atom" 1 }}
+- [NebulaGraph Dashboard  ![](https://shields.io/github/stars/vesoft-inc/nebula-dashboard?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-algorithm/releases.atom" 1 }}
+- [NebulaGraph Algorithm  ![](https://shields.io/github/stars/vesoft-inc/nebula-algorithm?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-exchange/releases.atom" 1 }}
+- [NebulaGraph Exchange  ![](https://shields.io/github/stars/vesoft-inc/nebula-exchange?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-spark-connector/releases.atom" 1 }}
+- [NebulaGraph Spark-connector  ![](https://shields.io/github/stars/vesoft-inc/nebula-spark-connector?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-importer/releases.atom" 1 }}
+- [NebulaGraph importer  ![](https://shields.io/github/stars/vesoft-inc/nebula-importer?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-br/releases.atom" 1 }}
+- [NebulaGraph br  ![](https://shields.io/github/stars/vesoft-inc/nebula-br?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-http-gateway/releases.atom" 1 }}
+- [NebulaGraph http-gateway  ![](https://shields.io/github/stars/vesoft-inc/nebula-http-gateway?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-flink-connector/releases.atom" 1 }}
+- [NebulaGraph flink-connector  ![](https://shields.io/github/stars/vesoft-inc/nebula-flink-connector?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-docker-compose/releases.atom" 1 }}
+- [NebulaGraph docker-compose  ![](https://shields.io/github/stars/vesoft-inc/nebula-docker-compose?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-stats-exporter/releases.atom" 1 }}
+- [NebulaGraph stats-exporter  ![](https://shields.io/github/stars/vesoft-inc/nebula-stats-exporter?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-cpp/releases.atom" 1 }}
+- [NebulaGraph cpp  ![](https://shields.io/github/stars/vesoft-inc/nebula-cpp?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-java/releases.atom" 1 }}
+- [NebulaGraph java  ![](https://shields.io/github/stars/vesoft-inc/nebula-java?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-python/releases.atom" 1 }}
+- [NebulaGraph python  ![](https://shields.io/github/stars/vesoft-inc/nebula-python?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
+{{- range rss "https://github.com/vesoft-inc/nebula-go/releases.atom" 1 }}
+- [NebulaGraph go  ![](https://shields.io/github/stars/vesoft-inc/nebula-go?style=social)](https://github.com/vesoft-inc/easeprobe) -  [{{ .Title }}]({{ .URL }}) ( Released {{ humanize .PublishedAt }} )
+{{- end }}
