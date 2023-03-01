@@ -22,7 +22,7 @@
 | Community Clients |[v3.4.0](https://github.com/vesoft-inc/nebula-cpp/releases/tag/v3.4.0),[NebulaGraph Java Client v3.4.0](https://github.com/vesoft-inc/nebula-java/releases/tag/v3.4.0),[NebulaGraph Python client v3.4.0](https://github.com/vesoft-inc/nebula-python/releases/tag/v3.4.0),[NebulaGraph Go client v3.4.0](https://github.com/vesoft-inc/nebula-go/releases/tag/v3.4.0),[Nebula Http Gateway v3.4.0](https://github.com/vesoft-inc/nebula-http-gateway/releases/tag/v3.4.0) |
 | Connectors        |[NebulaGraph Flink Connector v3.3.0](https://github.com/vesoft-inc/nebula-flink-connector/releases/tag/v3.3.0),[NebulaGraph Spark Connector v3.4.0](https://github.com/vesoft-inc/nebula-spark-connector/releases/tag/v3.4.0) |
 | Data Import       |[NebulaGraph Exchange v3.4.0](https://github.com/vesoft-inc/nebula-exchange/releases/tag/v3.4.0),[Nebula Importer v3.4.0](https://github.com/vesoft-inc/nebula-importer/releases/tag/v3.4.0) |
-| Graph Computation |[Nebula Algorithm v3.0.0](https://github.com/vesoft-inc/nebula-algorithm/releases/tag/v3.0.0) |
+| Graph Computation |[NebulaGraph Algorithm v3.1.0](https://github.com/vesoft-inc/nebula-algorithm/releases/tag/v3.1.0) |
 
 > Note, for more community projects like more Clients, ORM see also Nebula-Contrib GitHub Org: https://github.com/nebula-contrib/ and [docs](https://docs.nebula-graph.io/master/14.client/1.nebula-client/)
 
