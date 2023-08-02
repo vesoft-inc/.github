@@ -1,0 +1,28 @@
+name: 'MinIO Action'
+description: 'Setup MinIO client and set alias'
+inputs:
+  minio_url:
+    description: 'MinIO server URL'
+    required: true
+  access_key:
+    description: 'Access Key'
+    required: true
+  secret_key:
+    description: 'Secret Key'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - run: |
+        if ! command -v mc &> /dev/null
+        then
+          if [ "$(uname -m)" = "aarch64" ]; then
+            curl -O https://dl.min.io/client/mc/release/linux-arm64/mc
+          else
+            curl -O https://dl.min.io/client/mc/release/linux-amd64/mc
+          fi
+          chmod +x mc
+          sudo mv mc /usr/local/bin/ || mv mc /usr/local/bin/
+        fi
+        mc alias set minio ${{ inputs.minio_url }} ${{ inputs.access_key }} ${{ inputs.secret_key }}
+      shell: bash

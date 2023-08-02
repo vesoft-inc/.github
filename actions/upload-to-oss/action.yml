@@ -1,4 +1,4 @@
-name: 'Upload to oss'
+name: 'Upload OSS'
 description: 'Upload files to oss'
 inputs:
   key-id:
@@ -28,6 +28,12 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - run: |
+        if ! command -v ossutil &> /dev/null || ! command -v ossutil64 &> /dev/null
+        then
+          curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash || curl https://gosspublic.alicdn.com/ossutil/install.sh | bash
+        fi
+      shell: bash
     - run: |
         j=0
         if [ -d ${{ inputs.asset-path }} ]; then
