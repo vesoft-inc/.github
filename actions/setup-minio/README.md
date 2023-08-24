@@ -14,7 +14,7 @@ To use this action in your workflow, add the following step:
 
 ```yaml
 - name: Setup MinIO
-  uses: vesoft-inc/nebula-utils/setup-minio@master
+  uses: vesoft-inc/.github/actions/setup-minio@master
   with:
     minio_url: ${{ secrets.MINIO_ENDPOINT }}
     access_key: ${{ secrets.MINIO_KEY }}
