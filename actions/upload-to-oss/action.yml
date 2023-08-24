@@ -31,7 +31,7 @@ runs:
     - run: |
         if ! command -v ossutil &> /dev/null || ! command -v ossutil64 &> /dev/null
         then
-          curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash || curl https://gosspublic.alicdn.com/ossutil/install.sh | bash
+          (command -v sudo &> /dev/null && curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash) || curl https://gosspublic.alicdn.com/ossutil/install.sh | bash
         fi
       shell: bash
     - run: |
