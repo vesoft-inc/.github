@@ -22,7 +22,7 @@ runs:
             curl -O https://dl.min.io/client/mc/release/linux-amd64/mc
           fi
           chmod +x mc
-          sudo mv mc /usr/local/bin/ || mv mc /usr/local/bin/
+          command -v sudo &> /dev/null && sudo mv mc /usr/local/bin/ || mv mc /usr/local/bin/
         fi
         mc alias set minio ${{ inputs.minio_url }} ${{ inputs.access_key }} ${{ inputs.secret_key }}
       shell: bash
