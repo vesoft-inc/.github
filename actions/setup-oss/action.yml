@@ -1,0 +1,28 @@
+name: 'Setup OSS Environment'
+description: 'Install ossutil and configure OSS credentials'
+inputs:
+  oss-id:
+    description: 'OSS access key ID'
+    required: true
+  oss-secret:
+    description: 'OSS access key secret'
+    required: true
+  oss-endpoint:
+    description: 'OSS endpoint'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install ossutil
+      run: |
+        if ! command -v ossutil &> /dev/null || ! command -v ossutil64 &> /dev/null
+        then
+          (command -v sudo &> /dev/null && curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash) || curl https://gosspublic.alicdn.com/ossutil/install.sh | bash
+        fi
+      shell: bash
+
+    - name: Configure OSS
+      run: |
+        ossutil64 config -e ${{ inputs.oss-endpoint }} -i ${{ inputs.oss-id }} -k ${{ inputs.oss-secret }} -L CH
+      shell: bash
