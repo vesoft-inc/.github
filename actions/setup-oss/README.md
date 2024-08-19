@@ -21,6 +21,6 @@ This action installs ossutil and configures the OSS environment for further oper
 ```yaml
 uses: vesoft-inc/.github/actions/setup-oss@master
 with:
-  oss-id: ${{ secrets.OSS_ACCESS_KEY_ID }}
-  oss-secret: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+  oss-id: ${{ secrets.OSS_ID }}
+  oss-secret: ${{ secrets.OSS_SECRET }}
   oss-endpoint: ${{ secrets.OSS_ENDPOINT }}
