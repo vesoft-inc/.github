@@ -1,5 +1,9 @@
 name: "Extract tag information"
 description: "Extract tag information"
+inputs:
+  tag:
+    description: "Input tag (optional)"
+    required: false
 outputs:
   tag:
     description: "tag name"
@@ -15,10 +19,16 @@ runs:
   steps:
     - id: tag
       run: |
-        tag=$(echo ${{ github.ref }} | rev | cut -d/ -f1 | rev)
+        if [ -n "$INPUT_TAG" ]; then
+          tag=$INPUT_TAG
+        else
+          tag=$(echo ${{ github.ref }} | rev | cut -d/ -f1 | rev)
+        fi
         tagnum=$(echo $tag | sed "s/^v//")
         majorver=$(echo $tag | cut -d "." -f 1)
         echo "tag=$tag" >> $GITHUB_OUTPUT
         echo "tagnum=$tagnum" >> $GITHUB_OUTPUT
         echo "majorver=$majorver" >> $GITHUB_OUTPUT
       shell: bash
+      env:
+        INPUT_TAG: ${{ inputs.tag }}
