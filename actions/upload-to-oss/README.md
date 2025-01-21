@@ -31,7 +31,7 @@ Upload file to oss
 ## Example usage
 
 ```yaml
-uses: vesoft-inc/.github/actions/upload-to-oss
+uses: vesoft-inc/.github/actions/upload-to-oss@master
 with:
     key-id: ${{ secrets.OSS_ID }}
     key-secret: ${{ secrets.OSS_SECRET }}
