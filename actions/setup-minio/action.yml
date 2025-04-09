@@ -16,11 +16,31 @@ runs:
     - run: |
         if ! command -v mc &> /dev/null
         then
+          # 设置架构相关变量
+          ARCH="amd64"
           if [ "$(uname -m)" = "aarch64" ]; then
-            curl -O https://dl.min.io/client/mc/release/linux-arm64/mc
-          else
-            curl -O https://dl.min.io/client/mc/release/linux-amd64/mc
+            ARCH="arm64"
           fi
+          
+          # 定义下载地址
+          INTERNAL_URL="https://minio.vesoft-inc.com/ci-files/mc/release/linux-${ARCH}/mc"
+          PUBLIC_URL="https://dl.min.io/client/mc/release/linux-${ARCH}/mc"
+          
+          # 使用 GitHub 内置变量判断是否为 self-hosted runner
+          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ] && [ "$GITHUB_ACTIONS" = "true" ]; then
+            echo "Running on self-hosted runner, trying internal download first..."
+            if curl -s --head --fail "${INTERNAL_URL}" &>/dev/null; then
+              echo "Downloading mc from internal storage: ${INTERNAL_URL}"
+              curl -s -o mc "${INTERNAL_URL}"
+            else
+              echo "Internal download failed, falling back to public URL: ${PUBLIC_URL}"
+              curl -s -o mc "${PUBLIC_URL}"
+            fi
+          else
+            echo "Running on GitHub-hosted runner, using public download URL: ${PUBLIC_URL}"
+            curl -s -o mc "${PUBLIC_URL}"
+          fi
+          
           chmod +x mc
           command -v sudo &> /dev/null && sudo mv mc /usr/local/bin/ || mv mc /usr/local/bin/
         fi
