@@ -1,0 +1,14 @@
+FROM golang:1.23-alpine  AS builder
+
+COPY . /usr/src
+
+RUN apk add --no-cache git make  
+
+RUN cd /usr/src \
+	&& make
+
+FROM alpine AS ngctl
+
+COPY --from=builder /usr/src/github_util /usr/local/bin/github_util
+
+ENTRYPOINT ["github_util"]
