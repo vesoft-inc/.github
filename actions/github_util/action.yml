@@ -1,0 +1,21 @@
+name: "PR Check"
+description: ""
+inputs:
+  token:
+    description: "GitHub token"
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+
+    - name: Run PR check
+      run: |
+        go run main.go check -t "${{ inputs.token }}"
+      shell: bash
+    
+
