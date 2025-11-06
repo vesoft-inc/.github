@@ -28,4 +28,4 @@
 
 ### NebulaGraph Cloud
 
-There are managed NebulaGraph offerring in Azure, AWS, GCP and Aliyun 👉🏻 [learn more](https://www.nebula-graph.io/cloud)
+NebulaGraph Cloud is built on the latest version NebulaGraph 5.X, delivering 3x better performance and 90% lower memory usage compared to version 3.X. Enjoy a 14-day free trial—no credit card required! [Try NebulaGraph Cloud now](https://cloud.nebula-graph.io/login)
