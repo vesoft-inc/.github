@@ -14,35 +14,82 @@ runs:
   using: 'composite'
   steps:
     - run: |
-        if ! command -v mc &> /dev/null
-        then
-          # 设置架构相关变量
-          ARCH="amd64"
-          if [ "$(uname -m)" = "aarch64" ]; then
-            ARCH="arm64"
+        # 某些 runner 的 PATH 中可能已经有同名但不可用，或并非 MinIO Client 的 mc。
+        is_minio_mc() {
+          command -v mc >/dev/null 2>&1 || return 1
+          mc --help 2>&1 | grep -qi "MinIO Client"
+        }
+
+        if ! is_minio_mc; then
+          if command -v mc >/dev/null 2>&1; then
+            echo "Existing mc is unavailable or not MinIO Client, reinstalling..."
           fi
-          
-          # 定义下载地址
+
+          case "$(uname -m)" in
+            x86_64|amd64)
+              ARCH="amd64"
+              ;;
+            aarch64|arm64)
+              ARCH="arm64"
+              ;;
+            *)
+              echo "Unsupported architecture: $(uname -m)" >&2
+              exit 1
+              ;;
+          esac
+
           INTERNAL_URL="https://minio.vesoft-inc.com/ci-files/mc/release/linux-${ARCH}/mc"
           PUBLIC_URL="https://dl.min.io/client/mc/release/linux-${ARCH}/mc"
-          
-          # 使用 GitHub 内置变量判断是否为 self-hosted runner
+          TMP_MC="$(mktemp)"
+          trap 'rm -f "$TMP_MC"' EXIT
+
+          # dl.min.io 会重定向到 GitHub release assets，因此这里必须跟随跳转。
+          download_mc() {
+            local url="$1"
+            echo "Downloading mc from: ${url}"
+            curl --fail --location --silent --show-error \
+              --retry 3 --retry-delay 2 --connect-timeout 10 \
+              -o "$TMP_MC" "$url"
+          }
+
+          # 如果下载到的是 HTML/XML 错误页而不是 ELF 二进制，提前失败并输出预览。
+          validate_mc() {
+            local magic
+            magic="$(head -c 4 "$TMP_MC" | od -An -t x1 | tr -d ' \n')"
+            if [ "$magic" != "7f454c46" ]; then
+              echo "Downloaded mc is not a valid Linux executable." >&2
+              echo "Response preview:" >&2
+              head -c 120 "$TMP_MC" >&2 || true
+              return 1
+            fi
+          }
+
+          # self-hosted runner 优先走内网镜像，失败后再回退到公网地址。
           if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ] && [ "$GITHUB_ACTIONS" = "true" ]; then
             echo "Running on self-hosted runner, trying internal download first..."
-            if curl -s --head --fail "${INTERNAL_URL}" &>/dev/null; then
-              echo "Downloading mc from internal storage: ${INTERNAL_URL}"
-              curl -s -o mc "${INTERNAL_URL}"
-            else
+            if ! download_mc "$INTERNAL_URL" || ! validate_mc; then
               echo "Internal download failed, falling back to public URL: ${PUBLIC_URL}"
-              curl -s -o mc "${PUBLIC_URL}"
+              download_mc "$PUBLIC_URL"
+              validate_mc
             fi
           else
             echo "Running on GitHub-hosted runner, using public download URL: ${PUBLIC_URL}"
-            curl -s -o mc "${PUBLIC_URL}"
+            download_mc "$PUBLIC_URL"
+            validate_mc
           fi
-          
-          chmod +x mc
-          command -v sudo &> /dev/null && sudo mv mc /usr/local/bin/ || mv mc /usr/local/bin/
+
+          chmod +x "$TMP_MC"
+          if command -v sudo >/dev/null 2>&1; then
+            sudo mv "$TMP_MC" /usr/local/bin/mc
+          else
+            mv "$TMP_MC" /usr/local/bin/mc
+          fi
+          trap - EXIT
+
+          if ! is_minio_mc; then
+            echo "Installed mc is unavailable or not MinIO Client." >&2
+            exit 1
+          fi
         fi
-        mc alias set minio ${{ inputs.minio_url }} ${{ inputs.access_key }} ${{ inputs.secret_key }}
+        mc alias set minio "${{ inputs.minio_url }}" "${{ inputs.access_key }}" "${{ inputs.secret_key }}"
       shell: bash
