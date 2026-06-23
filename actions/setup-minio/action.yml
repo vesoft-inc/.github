@@ -18,12 +18,22 @@ runs:
         # the MinIO client. Always verify the concrete binary we plan to use.
         is_minio_mc() {
           local mc_bin="${1:-mc}"
+          local help_output
 
           if [ ! -x "$mc_bin" ]; then
             command -v "$mc_bin" >/dev/null 2>&1 || return 1
           fi
 
-          "$mc_bin" --help 2>&1 | grep -qi "MinIO Client"
+          help_output="$("$mc_bin" --help 2>&1)" || return 1
+
+          case "$help_output" in
+            *"MinIO Client"*)
+              return 0
+              ;;
+            *)
+              return 1
+              ;;
+          esac
         }
 
         resolve_install_dir() {
