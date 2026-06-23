@@ -14,15 +14,37 @@ runs:
   using: 'composite'
   steps:
     - run: |
-        # 某些 runner 的 PATH 中可能已经有同名但不可用，或并非 MinIO Client 的 mc。
+        # Some runners already have an "mc" in PATH that is broken or is not
+        # the MinIO client. Always verify the concrete binary we plan to use.
         is_minio_mc() {
-          command -v mc >/dev/null 2>&1 || return 1
-          mc --help 2>&1 | grep -qi "MinIO Client"
+          local mc_bin="${1:-mc}"
+
+          if [ ! -x "$mc_bin" ]; then
+            command -v "$mc_bin" >/dev/null 2>&1 || return 1
+          fi
+
+          "$mc_bin" --help 2>&1 | grep -qi "MinIO Client"
         }
 
-        if ! is_minio_mc; then
-          if command -v mc >/dev/null 2>&1; then
+        resolve_install_dir() {
+          if [ -n "${RUNNER_TEMP:-}" ]; then
+            echo "${RUNNER_TEMP}/minio-client-bin"
+          elif [ -n "${GITHUB_ACTION_PATH:-}" ]; then
+            echo "${GITHUB_ACTION_PATH}/.bin"
+          else
+            echo "/tmp/minio-client-bin"
+          fi
+        }
+
+        MC_BIN="$(command -v mc || true)"
+
+        if [ -n "$MC_BIN" ] && is_minio_mc "$MC_BIN"; then
+          echo "Using existing MinIO Client: ${MC_BIN}"
+        else
+          if [ -n "$MC_BIN" ]; then
             echo "Existing mc is unavailable or not MinIO Client, reinstalling..."
+          else
+            echo "mc is not installed, downloading MinIO Client..."
           fi
 
           case "$(uname -m)" in
@@ -40,10 +62,11 @@ runs:
 
           INTERNAL_URL="https://minio.vesoft-inc.com/ci-files/mc/release/linux-${ARCH}/mc"
           PUBLIC_URL="https://dl.min.io/client/mc/release/linux-${ARCH}/mc"
+          INSTALL_DIR="$(resolve_install_dir)"
           TMP_MC="$(mktemp)"
           trap 'rm -f "$TMP_MC"' EXIT
 
-          # dl.min.io 会重定向到 GitHub release assets，因此这里必须跟随跳转。
+          # dl.min.io redirects to GitHub release assets, so curl must follow it.
           download_mc() {
             local url="$1"
             echo "Downloading mc from: ${url}"
@@ -52,7 +75,7 @@ runs:
               -o "$TMP_MC" "$url"
           }
 
-          # 如果下载到的是 HTML/XML 错误页而不是 ELF 二进制，提前失败并输出预览。
+          # Fail early if the download is an HTML/XML error page instead of ELF.
           validate_mc() {
             local magic
             magic="$(head -c 4 "$TMP_MC" | od -An -t x1 | tr -d ' \n')"
@@ -64,7 +87,7 @@ runs:
             fi
           }
 
-          # self-hosted runner 优先走内网镜像，失败后再回退到公网地址。
+          # Self-hosted runners try the internal mirror first, then fall back.
           if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ] && [ "$GITHUB_ACTIONS" = "true" ]; then
             echo "Running on self-hosted runner, trying internal download first..."
             if ! download_mc "$INTERNAL_URL" || ! validate_mc; then
@@ -79,17 +102,26 @@ runs:
           fi
 
           chmod +x "$TMP_MC"
-          if command -v sudo >/dev/null 2>&1; then
-            sudo mv "$TMP_MC" /usr/local/bin/mc
-          else
-            mv "$TMP_MC" /usr/local/bin/mc
-          fi
+          mkdir -p "$INSTALL_DIR"
+          mv "$TMP_MC" "$INSTALL_DIR/mc"
           trap - EXIT
 
-          if ! is_minio_mc; then
+          export PATH="$INSTALL_DIR:$PATH"
+          if [ -n "${GITHUB_PATH:-}" ]; then
+            echo "$INSTALL_DIR" >> "$GITHUB_PATH"
+          fi
+          hash -r
+
+          MC_BIN="$INSTALL_DIR/mc"
+
+          if ! is_minio_mc "$MC_BIN"; then
             echo "Installed mc is unavailable or not MinIO Client." >&2
+            "$MC_BIN" --help 2>&1 || true
             exit 1
           fi
+
+          echo "Installed MinIO Client: ${MC_BIN}"
         fi
-        mc alias set minio "${{ inputs.minio_url }}" "${{ inputs.access_key }}" "${{ inputs.secret_key }}"
+
+        "$MC_BIN" alias set minio "${{ inputs.minio_url }}" "${{ inputs.access_key }}" "${{ inputs.secret_key }}"
       shell: bash
