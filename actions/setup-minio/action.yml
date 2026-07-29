@@ -1,30 +1,32 @@
-name: 'MinIO Action'
-description: 'Setup MinIO client and set alias'
+name: MinIO Action
+description: Setup MinIO client and set alias
+
 inputs:
   minio_url:
-    description: 'MinIO server URL'
+    description: MinIO server URL
     required: true
   access_key:
-    description: 'Access Key'
+    description: Access Key
     required: true
   secret_key:
-    description: 'Secret Key'
+    description: Secret Key
     required: true
+
 runs:
-  using: 'composite'
+  using: composite
   steps:
-    - run: |
-        # Some runners already have an "mc" in PATH that is broken or is not
-        # the MinIO client. Always verify the concrete binary we plan to use.
+    - shell: bash
+      run: |
+        set -euo pipefail
+
         is_minio_mc() {
-          local mc_bin="${1:-mc}"
+          local binary="${1:-}"
           local help_output
 
-          if [ ! -x "$mc_bin" ]; then
-            command -v "$mc_bin" >/dev/null 2>&1 || return 1
-          fi
+          [ -n "$binary" ] || return 1
+          [ -x "$binary" ] || return 1
 
-          help_output="$("$mc_bin" --help 2>&1)" || return 1
+          help_output="$("$binary" --help 2>&1)" || return 1
 
           case "$help_output" in
             *"MinIO Client"*)
@@ -36,33 +38,56 @@ runs:
           esac
         }
 
-        resolve_install_dir() {
-          if [ -n "${RUNNER_TEMP:-}" ]; then
-            echo "${RUNNER_TEMP}/minio-client-bin"
-          elif [ -n "${GITHUB_ACTION_PATH:-}" ]; then
-            echo "${GITHUB_ACTION_PATH}/.bin"
-          else
-            echo "/tmp/minio-client-bin"
+        validate_mc() {
+          local binary="$1"
+          local magic
+
+          magic="$(od -An -t x1 -N 4 "$binary" | tr -d ' \n')"
+
+          if [ "$magic" != "7f454c46" ]; then
+            echo "Downloaded file is not a valid Linux executable." >&2
+            echo "Response preview:" >&2
+            head -c 120 "$binary" >&2 || true
+            echo >&2
+            return 1
           fi
+        }
+
+        download_mc() {
+          local url="$1"
+          local output="$2"
+
+          echo "Downloading mc from: $url"
+
+          curl \
+            --fail \
+            --location \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --retry-delay 2 \
+            --connect-timeout 10 \
+            --output "$output" \
+            "$url"
         }
 
         MC_BIN="$(command -v mc || true)"
 
-        if [ -n "$MC_BIN" ] && is_minio_mc "$MC_BIN"; then
-          echo "Using existing MinIO Client: ${MC_BIN}"
+        if is_minio_mc "$MC_BIN"; then
+          echo "Using existing MinIO Client: $MC_BIN"
         else
           if [ -n "$MC_BIN" ]; then
-            echo "Existing mc is unavailable or not MinIO Client, reinstalling..."
+            echo "Existing mc is not MinIO Client, reinstalling..."
           else
-            echo "mc is not installed, downloading MinIO Client..."
+            echo "MinIO Client is not installed, downloading..."
           fi
 
           case "$(uname -m)" in
             x86_64|amd64)
-              ARCH="amd64"
+              arch=amd64
               ;;
             aarch64|arm64)
-              ARCH="arm64"
+              arch=arm64
               ;;
             *)
               echo "Unsupported architecture: $(uname -m)" >&2
@@ -70,68 +95,75 @@ runs:
               ;;
           esac
 
-          INTERNAL_URL="https://minio.vesoft-inc.com/ci-files/mc/release/linux-${ARCH}/mc"
-          PUBLIC_URL="https://dl.min.io/client/mc/release/linux-${ARCH}/mc"
-          INSTALL_DIR="$(resolve_install_dir)"
-          TMP_MC="$(mktemp)"
-          trap 'rm -f "$TMP_MC"' EXIT
+          internal_url="https://minio.vesoft-inc.com/ci-files/mc/release250813/linux-${arch}/mc"
+          public_url="https://dl.min.io/client/mc/release/linux-${arch}/mc"
 
-          # dl.min.io redirects to GitHub release assets, so curl must follow it.
-          download_mc() {
-            local url="$1"
-            echo "Downloading mc from: ${url}"
-            curl --fail --location --silent --show-error \
-              --retry 3 --retry-delay 2 --connect-timeout 10 \
-              -o "$TMP_MC" "$url"
-          }
+          install_dir="/tmp/minio-client-bin"
+          temp_mc="$(mktemp /tmp/minio-mc-download.XXXXXX)"
 
-          # Fail early if the download is an HTML/XML error page instead of ELF.
-          validate_mc() {
-            local magic
-            magic="$(head -c 4 "$TMP_MC" | od -An -t x1 | tr -d ' \n')"
-            if [ "$magic" != "7f454c46" ]; then
-              echo "Downloaded mc is not a valid Linux executable." >&2
-              echo "Response preview:" >&2
-              head -c 120 "$TMP_MC" >&2 || true
-              return 1
-            fi
-          }
+          trap 'rm -f "$temp_mc"' EXIT
 
-          # Self-hosted runners try the internal mirror first, then fall back.
-          if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ] && [ "$GITHUB_ACTIONS" = "true" ]; then
-            echo "Running on self-hosted runner, trying internal download first..."
-            if ! download_mc "$INTERNAL_URL" || ! validate_mc; then
-              echo "Internal download failed, falling back to public URL: ${PUBLIC_URL}"
-              download_mc "$PUBLIC_URL"
-              validate_mc
+          if [ "${RUNNER_ENVIRONMENT:-}" = "self-hosted" ] &&
+             [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+            echo "Trying internal MinIO Client download..."
+
+            if download_mc "$internal_url" "$temp_mc" &&
+               validate_mc "$temp_mc"; then
+              echo "Downloaded MinIO Client from internal storage."
+            else
+              echo "Internal download failed, falling back to public URL."
+              download_mc "$public_url" "$temp_mc"
+              validate_mc "$temp_mc"
             fi
           else
-            echo "Running on GitHub-hosted runner, using public download URL: ${PUBLIC_URL}"
-            download_mc "$PUBLIC_URL"
-            validate_mc
+            echo "Using public MinIO Client download."
+            download_mc "$public_url" "$temp_mc"
+            validate_mc "$temp_mc"
           fi
 
-          chmod +x "$TMP_MC"
-          mkdir -p "$INSTALL_DIR"
-          mv "$TMP_MC" "$INSTALL_DIR/mc"
+          chmod +x "$temp_mc"
+          mkdir -p "$install_dir"
+          mv "$temp_mc" "$install_dir/mc"
           trap - EXIT
 
-          export PATH="$INSTALL_DIR:$PATH"
-          if [ -n "${GITHUB_PATH:-}" ]; then
-            echo "$INSTALL_DIR" >> "$GITHUB_PATH"
-          fi
-          hash -r
-
-          MC_BIN="$INSTALL_DIR/mc"
+          MC_BIN="$install_dir/mc"
 
           if ! is_minio_mc "$MC_BIN"; then
-            echo "Installed mc is unavailable or not MinIO Client." >&2
+            echo "Installed mc is unavailable or is not MinIO Client." >&2
             "$MC_BIN" --help 2>&1 || true
             exit 1
           fi
 
-          echo "Installed MinIO Client: ${MC_BIN}"
+          if [ -n "${GITHUB_PATH:-}" ]; then
+            printf '%s\n' "$install_dir" >> "$GITHUB_PATH"
+          fi
+
+          echo "Installed MinIO Client: $MC_BIN"
         fi
 
-        "$MC_BIN" alias set minio "${{ inputs.minio_url }}" "${{ inputs.access_key }}" "${{ inputs.secret_key }}"
-      shell: bash
+        # GitHub Actions mounts HOME at /github/home. It may not be writable
+        # when the job container runs with --user.
+        if [ -z "${MC_CONFIG_DIR:-}" ]; then
+          MC_CONFIG_DIR="$(mktemp -d /tmp/minio-mc-config.XXXXXX)"
+        else
+          mkdir -p "$MC_CONFIG_DIR"
+        fi
+
+        if [ ! -w "$MC_CONFIG_DIR" ]; then
+          echo "MinIO config directory is not writable: $MC_CONFIG_DIR" >&2
+          exit 1
+        fi
+
+        export MC_CONFIG_DIR
+
+        # Let subsequent steps, such as `mc cp`, use the same alias config.
+        if [ -n "${GITHUB_ENV:-}" ]; then
+          printf 'MC_CONFIG_DIR=%s\n' "$MC_CONFIG_DIR" >> "$GITHUB_ENV"
+        fi
+
+        "$MC_BIN" --config-dir "$MC_CONFIG_DIR" alias set minio \
+          "${{ inputs.minio_url }}" \
+          "${{ inputs.access_key }}" \
+          "${{ inputs.secret_key }}"
+
+        echo "MinIO alias configured successfully."
