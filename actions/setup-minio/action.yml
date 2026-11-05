@@ -95,7 +95,7 @@ runs:
               ;;
           esac
 
-          internal_url="https://minio.vesoft-inc.com/ci-files/mc/release250813/linux-${arch}/mc"
+          internal_url="${MINIO_ENDPOINT:-https://minio.vesoft-inc.com}/ci-files/mc/release250813/linux-${arch}/mc"
           public_url="https://dl.min.io/client/mc/release/linux-${arch}/mc"
 
           install_dir="/tmp/minio-client-bin"
